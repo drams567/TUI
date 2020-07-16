@@ -14,7 +14,9 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 	int currLen = 0;
 
 	keypad(textWin, true);
-	
+	cbreak();	
+	noecho();
+
 	getmaxyx(textWin, y_max, x_max);
 
 	wmove(textWin, y_pos, x_pos);
@@ -22,16 +24,59 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 	input = (char*)malloc(sizeof(char)*maxLen);
 
 	in = ' ';
-	while((int)in != 10) {
+	while((int)in != 10 && (int)in != 9) 
+	{
 		in = wgetch(textWin);
-		if(x_pos < x_max) {
-			x_pos++;
+		if((int)in == 7) // Backspace
+		{
+			if(x_pos > 1) 
+			{
+				x_pos--;
+				wmove(textWin, y_pos, x_pos);
+				wdelch(textWin);
+				currLen--;
+			}
+			else
+			{
+				x_pos = x_max - 1;
+				y_pos--;
+				wmove(textWin, y_pos, x_pos);
+				wdelch(textWin);
+				currLen--;
+			}
 		}
-		else {
-			x_pos = 1;
-			y_pos++;
+		else if((int)in == 2)
+		{
+			
 		}
-		mvwprintw(textWin, y_pos, x_pos, "%c", in);
+		else if((int)in == 3)
+		{
+		
+		}
+		else if((int)in == 4)
+		{
+		
+		}
+		else if((int)in == 5)
+		{
+		
+		}
+		else 	// Input character
+		{
+			currLen++;
+			wprintw(textWin, "%c", in);
+			if(x_pos < x_max - 1) 
+			{
+				x_pos++;
+			}
+			else 
+			{
+				x_pos = 1;
+				y_pos++;
+			}
+			wmove(textWin, y_pos, x_pos);
+		}
+		
 		wrefresh(textWin);
 	}
 		
@@ -41,6 +86,9 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 int main() {
 	char* input = NULL;
 	int maxLen = 123;
+
+	cbreak();
+	noecho();
 
 	// Initialize ncurses
 	initscr();
