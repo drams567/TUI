@@ -11,7 +11,25 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 	char in;	
 	int y_max, x_max;
 	int y_pos = 1, x_pos = 1;
+	int i_pos;
 	int currLen = 0;
+
+	if(maxLen <= 0)
+	{
+		werase(textWin);
+		wrefresh(textWin);
+		printw("ERROR: Invalid max length of %d passed into buildTextBox()\n", maxLen);
+		refresh();
+		return NULL;
+	}
+	if(textWin == NULL)
+	{
+		werase(textWin);
+		wrefresh(textWin);
+		printw("ERROR: NULL window passed into buildTextBox()\n");
+		refresh();
+		return NULL;
+	}
 
 	keypad(textWin, true);
 	cbreak();	
@@ -22,9 +40,15 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 	wmove(textWin, y_pos, x_pos);
 
 	input = (char*)malloc(sizeof(char)*maxLen);
+	i_pos = 0;
+
+	for(int i = 0; i < maxLen; i++)
+	{
+		input[i] = ' ';
+	}
 
 	in = ' ';
-	while((int)in != 10 && (int)in != 9) 
+	while((int)in != 10 && (int)in != 9) // while not enter or tab
 	{
 		in = wgetch(textWin);
 		if((int)in == 7) // Backspace
@@ -33,50 +57,90 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 			{
 				x_pos--;
 				wmove(textWin, y_pos, x_pos);
-				wdelch(textWin);
+				wprintw(textWin, "%c", ' ');
 				currLen--;
 			}
-			else
+			else if(y_pos > 1)
 			{
-				x_pos = x_max - 1;
+				x_pos = x_max - 2;
 				y_pos--;
 				wmove(textWin, y_pos, x_pos);
-				wdelch(textWin);
+				wprintw(textWin, "%c", ' ');
 				currLen--;
 			}
 		}
-		else if((int)in == 2)
+		else if((int)in == 2) // Down Arrow
 		{
-			
+			if(y_pos < y_max - 2) 
+			{
+				y_pos++;
+			}
 		}
-		else if((int)in == 3)
+		else if((int)in == 3) // Up Arrow
 		{
-		
+			if(y_pos > 1) 
+			{
+				y_pos--;
+			}
 		}
-		else if((int)in == 4)
+		else if((int)in == 4) // Back Arrow
 		{
-		
+			if(x_pos > 1)
+			{
+				x_pos--;
+			}
+			else if(y_pos > 1)
+			{
+				x_pos = x_max - 2;
+				y_pos--;
+			}
 		}
-		else if((int)in == 5)
+		else if((int)in == 5) // Forward Arrow
 		{
-		
-		}
-		else 	// Input character
-		{
-			currLen++;
-			wprintw(textWin, "%c", in);
-			if(x_pos < x_max - 1) 
+			if(x_pos < x_max - 2)
 			{
 				x_pos++;
 			}
-			else 
+			else if(y_pos < y_max - 2)
 			{
-				x_pos = 1;
 				y_pos++;
+				x_pos = 1;
 			}
-			wmove(textWin, y_pos, x_pos);
 		}
-		
+		else 	// Input character
+		{
+			if(currLen < maxLen)
+			{
+				if(x_pos < x_max - 2) 
+				{
+					input[i_pos] = in;
+					wprintw(textWin, "%c", in);
+					currLen++;					
+					i_pos++;
+					x_pos++;
+				}
+				else if(y_pos < y_max - 2) 
+				{
+					input[i_pos] = in;
+					wprintw(textWin, "%c", in);
+					currLen++;
+					i_pos++;
+					x_pos = 1;
+					y_pos++;
+				}
+			}
+		}
+	
+		if(y_pos >= y_max - 1 || x_pos >= x_max - 1) 
+		{
+			wclear(textWin);
+			wrefresh(textWin);
+			printw("ERROR: Out of bounds\n");
+			refresh();
+			return NULL;
+		}
+	
+		wmove(textWin, y_pos, x_pos);
 		wrefresh(textWin);
 	}
 		
@@ -99,20 +163,38 @@ int main() {
 
 	// Create window for text box
 	WINDOW * textBox = newwin(width, height, 0, 0);
+	box(textBox, '|', '-');
 	
 	wrefresh(textBox);
 	refresh();
 
 	input = buildTextBox(textBox, maxLen);
-	delwin(textBox);
+	werase(textBox);
 	
+	wrefresh(textBox);
 	refresh();
+	
+	delwin(textBox);
 	
 	printw("Press any key to exit...");
 	refresh();
 	
 	getchar();
 	endwin();
+
+	printf("Input:\n");
+	if(input != NULL)
+	{
+		for(int i = 0; i < maxLen; i++) 
+		{
+			printf("%c", input[i]);
+		}
+		printf("\n");
+	}
+	else
+	{
+		printf("NULL\n");
+	}
 	
 	// Clean up
 	if(input != NULL) {

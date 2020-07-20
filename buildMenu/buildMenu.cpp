@@ -65,8 +65,8 @@ int main() {
 	wrefresh(mainMenu);
 	refresh();
 
-	string items[] = {"option 1"};
-	int size = 1;	
+	string items[] = {"option 1", "option 2", "option 3", "option 4"};
+	int size = 4;	
 
 	int choice = buildMenu(mainMenu, items, size);
 	delwin(mainMenu);
