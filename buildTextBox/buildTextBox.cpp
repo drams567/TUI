@@ -14,6 +14,7 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 	int i_pos;
 	int currLen = 0;
 
+	// Check Params //
 	if(maxLen <= 0)
 	{
 		werase(textWin);
@@ -31,106 +32,135 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 		return NULL;
 	}
 
+	// Adjust settings for input
 	keypad(textWin, true);
 	cbreak();	
 	noecho();
 
+	// Get screen size
 	getmaxyx(textWin, y_max, x_max);
 
-	wmove(textWin, y_pos, x_pos);
-
+	// Initialize input buffer
 	input = (char*)malloc(sizeof(char)*maxLen);
-	i_pos = 0;
-
 	for(int i = 0; i < maxLen; i++)
 	{
 		input[i] = ' ';
 	}
-
+	input[maxLen - 1] = '\0';
+	
+	// Initialize for input
+	i_pos = 0;
 	in = ' ';
+	wmove(textWin, y_pos, x_pos);
+	
+	// Get Input //
 	while((int)in != 10 && (int)in != 9) // while not enter or tab
 	{
+		// Get Character and Handle //
 		in = wgetch(textWin);
-		if((int)in == 7) // Backspace
+		// Backspace, replace previous character with space
+		if((int)in == 7)
 		{
-			if(x_pos > 1) 
+			// previous character is on same line
+			if(x_pos > 1)
 			{
 				x_pos--;
 				wmove(textWin, y_pos, x_pos);
 				wprintw(textWin, "%c", ' ');
+				
+				i_pos--;
+				input[i_pos] = ' ';
 				currLen--;
 			}
+			// previous character is on line above
 			else if(y_pos > 1)
 			{
 				x_pos = x_max - 2;
 				y_pos--;
 				wmove(textWin, y_pos, x_pos);
 				wprintw(textWin, "%c", ' ');
+				
+				i_pos--;
+				input[i_pos] = ' ';
 				currLen--;
 			}
 		}
+		// Down Arrow, move cursor down
 		else if((int)in == 2) // Down Arrow
 		{
 			if(y_pos < y_max - 2) 
 			{
 				y_pos++;
+				i_pos += x_max - 1;
 			}
 		}
+		// Up Arrow, move cursor up
 		else if((int)in == 3) // Up Arrow
 		{
 			if(y_pos > 1) 
 			{
 				y_pos--;
+				i_pos -= x_max - 1;
 			}
 		}
+		// Back Arrow, move cursor to previous character
 		else if((int)in == 4) // Back Arrow
 		{
 			if(x_pos > 1)
 			{
 				x_pos--;
+				i_pos--;
 			}
 			else if(y_pos > 1)
 			{
 				x_pos = x_max - 2;
 				y_pos--;
+				i_pos--;
 			}
 		}
+		// Forward Arrow, move cursor to next character
 		else if((int)in == 5) // Forward Arrow
 		{
 			if(x_pos < x_max - 2)
 			{
 				x_pos++;
+				i_pos++;
 			}
 			else if(y_pos < y_max - 2)
 			{
 				y_pos++;
 				x_pos = 1;
+				i_pos++;
 			}
 		}
-		else 	// Input character
+		// Text Character, add character to current position
+		else if((int)in != 10 && (int)in != 9)
 		{
-			if(currLen < maxLen)
+			if(currLen < maxLen - 1) // save room for null terminator
 			{
 				if(x_pos < x_max - 2) 
 				{
-					input[i_pos] = in;
 					wprintw(textWin, "%c", in);
+					x_pos++;
+					
+					input[i_pos] = in;
 					currLen++;					
 					i_pos++;
-					x_pos++;
 				}
 				else if(y_pos < y_max - 2) 
 				{
-					input[i_pos] = in;
 					wprintw(textWin, "%c", in);
-					currLen++;
-					i_pos++;
 					x_pos = 1;
 					y_pos++;
+					
+					input[i_pos] = in;
+					currLen++;
+					i_pos++;
 				}
 			}
 		}
 	
+		// bound check cursor postion, for debugging purposes
 		if(y_pos >= y_max - 1 || x_pos >= x_max - 1) 
 		{
 			wclear(textWin);
@@ -139,7 +169,8 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 			refresh();
 			return NULL;
 		}
-	
+
+		// Update cursor and screen	
 		wmove(textWin, y_pos, x_pos);
 		wrefresh(textWin);
 	}
@@ -149,7 +180,7 @@ char* buildTextBox(WINDOW* textWin, int maxLen) {
 
 int main() {
 	char* input = NULL;
-	int maxLen = 123;
+	int maxLen = 500;
 
 	cbreak();
 	noecho();
