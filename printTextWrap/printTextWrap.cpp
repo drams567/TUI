@@ -6,27 +6,23 @@
 
 using namespace std;
 
-int printTextWrap(WINDOW* win, const char* text, int len) 
+int printTextWrap(WINDOW* win, int y_start, int x_start, const char* text, int len) 
 {
 	int y_max, x_max;
 	int y_pos, x_pos;
 	int i_pos;
-	int maxLen;
 	bool endOfWin;
 
 	getmaxyx(win, y_max, x_max);
-	
-	maxLen = ((x_max - 2)*(y_max - 2));
-
-	if(len > maxLen) 
+	if(y_start >= (y_max - 1) || x_start >= (x_max - 1) || y_start <= 0 || x_start <= 0)
 	{
-		wprintw(win, "ERROR: text exceeds maximum length for window. Max length is %d, length of test is %d", maxLen, len);
-		return -1;
+		mvprintw(0, 0, "printTextWrap: ERROR invalid start position of (%d,%d)(y, x).\n", y_start, x_start);
+		refresh();
+		return 1;
 	}
 
-
-	y_pos = 1;
-	x_pos = 1;
+	y_pos = y_start;
+	x_pos = x_start;
 	wmove(win, y_pos, x_pos);
 
 	i_pos = 0;
@@ -43,6 +39,10 @@ int printTextWrap(WINDOW* win, const char* text, int len)
 			if(y_pos < y_max - 2)
 			{
 				y_pos++;
+				if((i_pos + 1) < len && text[i_pos+1] == ' ')
+				{
+					i_pos++; // skip space at new line
+				}
 			}
 			else
 			{
@@ -55,11 +55,11 @@ int printTextWrap(WINDOW* win, const char* text, int len)
 	wrefresh(win);
 	getchar();
 
-	return (maxLen - i_pos); // i_pos will already be adjusted to number of char printed
+	return (len - i_pos); // number of characters not printed
 }
 
 int main() {
-	string outMsg = "This is my test message to output.";
+	string outMsg = "David is my test message to output.";
 	int ret;
 
 	cbreak();
@@ -79,7 +79,7 @@ int main() {
 	wrefresh(textBox);
 	refresh();
 
-	ret = printTextWrap(textBox, outMsg.c_str(), (int)outMsg.size());
+	ret = printTextWrap(textBox, 6, 5, outMsg.c_str(), (int)outMsg.size());
 	werase(textBox);
 	
 	wrefresh(textBox);
