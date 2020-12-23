@@ -1,64 +1,67 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include <stdio.h>
 #include <stdlib.h>
 #include <curses.h>
+#include <cstring>
 
 using namespace std;
 
-int printTextWrap(WINDOW* win, int y_start, int x_start, const char* text, int len) 
-{
-	int y_max, x_max;
-	int y_pos, x_pos;
-	int i_pos;
-	bool endOfWin;
-
-	getmaxyx(win, y_max, x_max);
-	if(y_start >= (y_max - 1) || x_start >= (x_max - 1) || y_start <= 0 || x_start <= 0)
-	{
-		mvprintw(0, 0, "printTextWrap: ERROR invalid start position of (%d,%d)(y, x).\n", y_start, x_start);
-		refresh();
-		return 1;
-	}
-
-	y_pos = y_start;
-	x_pos = x_start;
-	wmove(win, y_pos, x_pos);
-
-	i_pos = 0;
-	while(i_pos < len && endOfWin == false)
-	{
-		wprintw(win, "%c", text[i_pos]);
-		if(x_pos < x_max - 2)
-		{
-			x_pos++;
-		}
-		else
-		{
-			x_pos = 1;
-			if(y_pos < y_max - 2)
-			{
-				y_pos++;
-				if((i_pos + 1) < len && text[i_pos+1] == ' ')
-				{
-					i_pos++; // skip space at new line
-				}
-			}
-			else
-			{
-				endOfWin = true;
-			}
-		}
-		wmove(win, y_pos, x_pos);
-		i_pos++;
-	}
-	wrefresh(win);
-	getchar();
-
-	return (len - i_pos); // number of characters not printed
+void tokenizeString(vector<string> &tokens, char* source, const char* delim) {
+	// Tokenize string
+    char* curr = strtok(source, delim);
+    while(curr != NULL) {
+        tokens.push_back(string(curr));
+        curr = strtok(NULL, delim);
+    }
 }
 
-int main() {
+int printTextWrap(WINDOW* win, int y_start, int x_start, const char* text, int len) {
+	// Copy print text
+	char newText[len+1];
+	for(int i = 0; i < len; i++)
+		newText[i] = text[i];
+	newText[len] = '\0';
+
+	// Tokenize print text
+	vector<string> tokenList;
+	tokenizeString(tokenList, newText, " \n");
+	
+	int y_pos = y_start, x_pos = x_start;
+	int y_max, x_max;
+	getmaxyx(win, y_max, x_max);
+	y_max--;
+	x_max--;
+	int i = 0;
+	int numTokens = (int)tokenList.size();
+	while(i < numTokens && y_pos < y_max) {
+		string token = tokenList.at(i);
+		int len = (int)token.size();
+		if(len <= x_max - x_pos) {
+			mvwprintw(win, y_pos, x_pos, "%s", token.c_str());
+			x_pos += len;
+			
+			if(x_pos < x_max) {
+				mvwprintw(win, y_pos, x_pos, "%c", ' ');
+				x_pos++;
+			}
+			i++;
+		}
+		else {
+			y_pos++;
+			x_pos = 1;
+		}
+	}
+
+	wrefresh(win);
+	refresh();
+	
+	return 0;
+
+}
+
+int main(int argc, char* argv[]) {
 	string outMsg = "David is my test message to output.";
 	int ret;
 
@@ -69,8 +72,8 @@ int main() {
 	initscr();
 	refresh();
 
-	int width = 10;
-	int height = 10;
+	int height = atoi(argv[1]);
+	int width = atoi(argv[2]);
 
 	// Create window for text box
 	WINDOW * textBox = newwin(width, height, 0, 0);
@@ -79,7 +82,8 @@ int main() {
 	wrefresh(textBox);
 	refresh();
 
-	ret = printTextWrap(textBox, 6, 5, outMsg.c_str(), (int)outMsg.size());
+	ret = printTextWrap(textBox, 1, 1, outMsg.c_str(), (int)outMsg.size());
+	getchar();
 	werase(textBox);
 	
 	wrefresh(textBox);
