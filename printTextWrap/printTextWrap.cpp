@@ -35,10 +35,11 @@ int printTextWrap(WINDOW* win, int y_start, int x_start, const char* text, int l
 	x_max--;
 	int i = 0;
 	int numTokens = (int)tokenList.size();
+	
 	while(i < numTokens && y_pos < y_max) {
 		string token = tokenList.at(i);
 		int len = (int)token.size();
-		if(len <= x_max - x_pos) {
+		if(len <= (x_max - x_pos)) {
 			mvwprintw(win, y_pos, x_pos, "%s", token.c_str());
 			x_pos += len;
 			
@@ -53,16 +54,19 @@ int printTextWrap(WINDOW* win, int y_start, int x_start, const char* text, int l
 			x_pos = 1;
 		}
 	}
-
-	wrefresh(win);
-	refresh();
 	
-	return 0;
+	// Check for missed tokens
+	int missedChars = 0;
+	while(i < numTokens) {
+		missedChars += (int)tokenList.at(i).size();
+		i++;
+	}
 
+	return missedChars;
 }
 
 int main(int argc, char* argv[]) {
-	string outMsg = "David is my test message to output.";
+	string outMsg = "David";
 	int ret;
 
 	cbreak();
@@ -83,19 +87,17 @@ int main(int argc, char* argv[]) {
 	refresh();
 
 	ret = printTextWrap(textBox, 1, 1, outMsg.c_str(), (int)outMsg.size());
+	wrefresh(textBox);
+	refresh();
 	getchar();
-	werase(textBox);
 	
+	werase(textBox);
 	wrefresh(textBox);
 	refresh();
 	
 	delwin(textBox);
 	
 	printw("ret = %d", ret);
-	refresh();
-	getchar();
-
-	printw("Press any key to exit...");
 	refresh();
 	getchar();
 
