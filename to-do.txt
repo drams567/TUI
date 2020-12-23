@@ -1,0 +1,6 @@
+General
+-change function names, such as printTW for print text wrap.
+
+printTextWrap
+-return number of characters not printed
+-preserve paragraphs, i.e. consecutive newlines
