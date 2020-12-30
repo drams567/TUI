@@ -10,11 +10,11 @@ driver.out: $(OBJ)
 
 .PHONY:
 run:
-	./driver.out
+	./driver.out 15 20
 
 .PHONY:
 valrun:
-	valgrind ./driver.out
+	valgrind ./driver.out 15 20
 
 .PHONY:
 clean:

@@ -17,7 +17,7 @@ void tokenizeString(vector<string> &tokens, char* source, const char* delim) {
     }
 }
 
-int printTextWrap(WINDOW* win, int y_start, int x_start, const char* text, int len) {
+int printTextWrap(WINDOW* win, int y_start, int x_start, const char* text, const int len) {
 	// Copy print text
 	char newText[len+1];
 	for(int i = 0; i < len; i++)
